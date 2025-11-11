@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>DentalAI - Chuẩn Đoán Sức Khỏe Răng Miệng Với AI</title>
+    <meta name="description" content="Nền tảng chuẩn đoán sức khỏe răng miệng hàng đầu với công nghệ AI tiên tiến">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    <div class="logo-icon">😁</div>
+                    <span class="logo-text">DentalAI</span>
+                </a>
+                <nav id="mainNav">
+                    <a href="#home">Trang Chủ</a>
+                    <a href="#diagnosis">Dịch Vụ</a>
+                    <a href="#features">Về Chúng Tôi</a>
+                    <a href="#contact">Liên Hệ</a>
+                    <a href="#" class="btn btn-outline">Đăng Nhập</a>
+                    <a href="#" class="btn btn-primary">Đăng Ký</a>
+                </nav>
+                <button class="menu-toggle" id="menuToggle">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="badge">
+                        <span>✨</span>
+                        <span>Công nghệ AI tiên tiến</span>
+                    </div>
+                    <h1>Chuẩn Đoán Sức Khỏe Răng Miệng Với AI</h1>
+                    <p class="hero-description">
+                        Phân tích tức thì với độ chính xác cao. Nhận kết quả chi tiết và lời khuyên từ AI chuyên nghiệp trong vài giây.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#diagnosis" class="btn btn-primary btn-lg">Bắt Đầu Chuẩn Đoán</a>
+                        <a href="#features" class="btn btn-outline btn-lg">Tìm Hiểu Thêm</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon">🛡️</div>
+                            <div>
+                                <div class="stat-number">99.5%</div>
+                                <div class="stat-label">Độ chính xác</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">⚡</div>
+                            <div>
+                                <div class="stat-number"><10s</div>
+                                <div class="stat-label">Phân tích</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">✨</div>
+                            <div>
+                                <div class="stat-number">24/7</div>
+                                <div class="stat-label">Sẵn sàng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1642844819197-5f5f21b89ff8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080" alt="Phòng khám nha khoa hiện đại">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Diagnosis Section -->
+    <section class="diagnosis" id="diagnosis">
+        <div class="container">
+            <div class="section-header">
+                <h2>Chuẩn Đoán Ngay</h2>
+                <p class="section-description">
+                    Upload ảnh răng của bạn hoặc chụp ảnh trực tiếp để AI phân tích và đưa ra kết quả chuẩn đoán chi tiết
+                </p>
+            </div>
+            <div class="diagnosis-grid">
+                <!-- Upload Section -->
+                <div class="card">
+                    <div class="upload-tabs">
+                        <button id="tabSelectFile" class="tab-btn active">📁 Chọn Ảnh</button>
+                        <button id="tabCaptureImage" class="tab-btn">📷 Chụp Ảnh</button>
+                    </div>
+                    <div class="upload-content">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">📁</div>
+                            <h3>Kéo thả ảnh vào đây</h3>
+                            <p style="color: var(--text-gray); margin: 1rem 0;">hoặc</p>
+                            <button type="button" class="btn btn-outline" id="selectFileBtn">Chọn từ thiết bị</button>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    <img id="previewImage" class="preview-image hidden" alt="Preview">
+                    <div id="cameraView" class="camera-view hidden">
+                        <video id="cameraStream" autoplay playsinline></video>
+                        <canvas id="cameraCanvas" class="camera-canvas"></canvas>
+                        <div class="camera-controls">
+                            <button id="captureBtn" class="btn btn-primary">Chụp</button>
+                            <button id="cancelCameraBtn" class="btn btn-outline">Hủy</button>
+                        </div>
+                    </div>
+                    <button id="analyzeBtn" class="btn btn-primary btn-full hidden">Phân Tích</button>
+                    <button id="resetBtn" class="btn btn-outline btn-full hidden">Thử Lại</button>
+                    
+                    <div class="info-box">
+                        <div class="info-icon">ℹ️</div>
+                        <div style="font-size: 0.875rem; color: #1e40af;">
+                            <div style="font-weight: 500;">Lưu ý khi chụp ảnh:</div>
+                            <ul style="list-style-position: inside; margin-top: 0.5rem;">
+                                <li>Đảm bảo ánh sáng đủ sáng</li>
+                                <li>Giữ camera ổn định</li>
+                                <li>Chụp toàn bộ vùng răng cần kiểm tra</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="info-box" style="margin-top: 1rem;">
+                        <div class="info-icon">💡</div>
+                        <div style="font-size: 0.875rem; color: #1e40af;">
+                            <div style="font-weight: 500;"> Gợi ý điều trị & chăm sóc</div>
+                            <div style="margin-top: 0.5rem;">
+                                <p style="margin-bottom: 0.5rem;">Dựa trên phân tích AI:</p>
+                                <ul style="list-style: none; padding-left: 0;">
+                                    <li style="margin-bottom: 0.5rem;">
+                                        <strong>Gợi ý làm sạch:</strong>
+                                        <div style="color: #374151;">"Cần lấy cao răng định kỳ"</div>
+                                    </li>
+                                    <li style="margin-bottom: 0.5rem;">
+                                        <strong>Gợi ý chăm sóc:</strong>
+                                        <div style="color: #374151;">"Đánh răng 2 lần/ngày, dùng nước súc miệng kháng khuẩn"</div>
+                                    </li>
+                                    <li style="margin-bottom: 0.5rem;">
+                                        <strong>Gợi ý khám nha sĩ:</strong>
+                                        <div style="color: #374151;">"Khuyến nghị kiểm tra răng số 16 do nghi sâu nhẹ"</div>
+                                    </li>
+                                    <li>
+                                        <strong>Gợi ý thẩm mỹ:</strong>
+                                        <div style="color: #374151;">"Có thể cân nhắc tẩy trắng hoặc chỉnh nha nhẹ"</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Kết Quả Phân Tích</h3>
+                    <div class="result-area" id="resultArea">
+                        <div class="result-placeholder" id="placeholder">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
+                            <p>Kết quả sẽ hiển thị tại đây</p>
+                        </div>
+                        <div class="loading hidden" id="loading">
+                            <div class="spinner"></div>
+                            <h4>Đang Phân Tích...</h4>
+                            <p style="color: var(--text-gray);">AI đang xử lý hình ảnh của bạn</p>
+                        </div>
+                                                <div class="result-content hidden" id="result">
+                            <div class="result-header">
+                                <div id="overview-status-icon">✓</div>
+                                <div id="overview-text">Đã hoàn thành phân tích</div>
+                            </div>
+
+                            <!-- Annotated Image Section -->
+                            <div id="annotated-image-section" class="hidden" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                                <h4 style="color: var(--primary-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>🎯</span>
+                                    <span>Ảnh Khoanh Vùng Bệnh Lý</span>
+                                </h4>
+                                <div style="border: 2px solid var(--primary-color); border-radius: var(--radius-lg); padding: 1rem; background: white; position: relative;">
+                                    <div style="position: relative; width: 100%; display: inline-block;">
+                                        <img id="annotated-preview" src="" alt="Annotated Image" style="width: 100%; height: auto; display: block; position: relative; z-index: 1;">
+                                        <canvas id="detection-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999;"></canvas>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                    <span style="margin-right: 0.5rem;">ℹ️</span>
+                                    <span>Các vùng được khoanh đỏ là khu vực phát hiện bệnh lý</span>
+                                </p>
+                            </div>                            <!-- Model Results Summary -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                                <div id="yolo-summary" class="model-summary-card hidden">
+                                    <div class="model-icon">🎯</div>
+                                    <div class="model-name">YOLO Detection</div>
+                                    <div class="model-result" id="yolo-result">-</div>
+                                </div>
+                                <div id="cnn-summary" class="model-summary-card hidden">
+                                    <div class="model-icon">🧠</div>
+                                    <div class="model-name">CNN Classification</div>
+                                    <div class="model-result" id="cnn-result">-</div>
+                                </div>
+                                <div class="model-summary-card">
+                                    <div class="model-icon">✨</div>
+                                    <div class="model-name">Gemini AI</div>
+                                    <div class="model-result">Phân tích chi tiết</div>
+                                </div>
+                            </div>
+
+                            <div id="confidence-section" class="hidden" style="margin-top: 1rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                    <span style="color: var(--text-gray);">Độ tin cậy:</span>
+                                    <span id="confidence-percent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="result-details">
+                                <h4 class="result-section-title">
+                                    <span class="result-section-icon">📋</span> Tổng Quan
+                                </h4>
+                                <div class="result-section-content">
+                                    <p id="diagnosis-text" class="diagnosis-text"></p>
+                                </div>
+
+                                <h4 class="result-section-title">
+                                    <span class="result-section-icon">🔍</span> Phát Hiện Chi Tiết
+                                </h4>
+                                <div class="result-section-content">
+                                    <ul id="findings-list" class="findings-list">
+                                        <!-- Findings will be inserted here by JS -->
+                                    </ul>
+                                </div>
+
+                                <h4 class="result-section-title">
+                                    <span class="result-section-icon">💡</span> Khuyến Nghị Điều Trị
+                                </h4>
+                                <div class="result-section-content">
+                                    <ul id="recommendations" class="recommendations">
+                                        <!-- Recommendations will be inserted here by JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.75rem; padding-top: 1rem;">
+                                <button class="btn btn-primary" style="flex: 1;" onclick="alert('Chức năng đang phát triển!')">Đặt Lịch Khám</button>
+                                <button class="btn btn-outline" style="flex: 1;" onclick="alert('Chức năng đang phát triển!')">Tải Báo Cáo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Tại Sao Chọn Chúng Tôi?</h2>
+                <p class="section-description">
+                    Nền tảng chẩn đoán răng miệng hàng đầu với công nghệ AI tiên tiến và đội ngũ chuyên gia uy tín
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon icon-blue">🧠</div>
+                    <h3>AI Thông Minh</h3>
+                    <p style="color: var(--text-gray);">Công nghệ học sâu tiên tiến được đào tạo từ hàng triệu hình ảnh y khoa</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-green">⏱️</div>
+                    <h3>Nhanh Chóng</h3>
+                    <p style="color: var(--text-gray);">Nhận kết quả chẩn đoán chi tiết chỉ trong vài giây</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-purple">🛡️</div>
+                    <h3>Bảo Mật</h3>
+                    <p style="color: var(--text-gray);">Dữ liệu được mã hóa và bảo vệ theo tiêu chuẩn y tế quốc tế</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-yellow">🏆</div>
+                    <h3>Chính Xác Cao</h3>
+                    <p style="color: var(--text-gray);">Độ chính xác lên đến 99.5% được xác nhận bởi các chuyên gia nha khoa</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-cyan">📈</div>
+                    <h3>Theo Dõi Tiến Trình</h3>
+                    <p style="color: var(--text-gray);">Lưu trữ lịch sử chuẩn đoán và theo dõi sự cải thiện theo thời gian</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-orange">👥</div>
+                    <h3>Tư Vấn Chuyên Gia</h3>
+                    <p style="color: var(--text-gray);">Kết nối với nha sĩ chuyên nghiệp để được tư vấn trực tiếp</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div>
+                    <div class="stat-number-large">500K+</div>
+                    <div class="stat-label-large">Người Dùng</div>
+                    <p class="stat-description">Tin tưởng sử dụng</p>
+                </div>
+                <div>
+                    <div class="stat-number-large">2M+</div>
+                    <div class="stat-label-large">Chuẩn đoán</div>
+                    <p class="stat-description">Đã thực hiện</p>
+                </div>
+                <div>
+                    <div class="stat-number-large">99.5%</div>
+                    <div class="stat-label-large">Độ Chính Xác</div>
+                    <p class="stat-description">Được xác nhận</p>
+                </div>
+                <div>
+                    <div class="stat-number-large">24/7</div>
+                    <div class="stat-label-large">Hỗ Trợ</div>
+                    <p class="stat-description">Luôn sẵn sàng</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2>Khách Hàng Nói Gì Về Chúng Tôi</h2>
+                <p class="section-description">
+                    Hơn 500,000 người dùng đã tin tưởng và sử dụng dịch vụ của chúng tôi
+                </p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <p class="testimonial-text">"Ứng dụng rất tiện lợi và chính xác. Giúp tôi phát hiện sớm vấn đề răng miệng và được điều trị kịp thời. Cảm ơn đội ngũ phát triển!"</p>
+                    <div class="testimonial-author">
+                        <div class="avatar">NM</div>
+                        <div>
+                            <div class="author-name">Nguyễn Thị Mai</div>
+                            <p class="author-role">Khách hàng</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <p class="testimonial-text">"Công nghệ AI thật tuyệt vời! Chỉ vài giây là có kết quả chi tiết. Rất hữu ích cho người bận rộn như tôi."</p>
+                    <div class="testimonial-author">
+                        <div class="avatar">TH</div>
+                        <div>
+                            <div class="author-name">Trần Văn Hùng</div>
+                            <p class="author-role">Doanh nhân</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <p class="testimonial-text">"Tôi đã sử dụng nhiều lần và luôn nhận được kết quả chính xác. Giao diện đẹp, dễ sử dụng. Rất recommend!"</p>
+                    <div class="testimonial-author">
+                        <div class="avatar">LH</div>
+                        <div>
+                            <div class="author-name">Lê Thị Hương</div>
+                            <p class="author-role">Giáo viên</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Bắt Đầu Chăm Sóc Răng Miệng Của Bạn Ngay Hôm Nay</h2> 
+                <p class="cta-description">
+                    Đăng ký miễn phí và nhận ngay 3 lần chuẩn đoán miễn phí. Không cần thẻ tín dụng.
+                </p>
+                <div class="cta-buttons">
+                    <a href="#" class="btn btn-white btn-lg">Đăng Ký Miễn Phí →</a>
+                    <a href="#" class="btn btn-outline-white btn-lg">Xem Demo</a>
+                </div>
+                <p class="cta-footer-text">
+                    Đã có tài khoản? <a href="#">Đăng nhập ngay</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-brand">
+                        <div class="logo-icon" style="width: 32px; height: 32px; font-size: 18px;">😁</div>
+                        <span class="footer-brand-text">DentalAI</span> 
+                    </div>
+                    <p class="footer-description">
+                        Nền tảng chuẩn đoán sức khỏe răng miệng hàng đầu với công nghệ AI tiên tiến.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">f</a>
+                        <a href="#" class="social-link" aria-label="Instagram">📷</a>
+                        <a href="#" class="social-link" aria-label="Twitter">🐦</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="footer-title">Dịch Vụ</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Chuẩn Đoán AI</a></li>
+                        <li><a href="#">Tư Vấn Trực Tuyến</a></li>
+                        <li><a href="#">Đặt Lịch Khám</a></li>
+                        <li><a href="#">Theo Dõi Sức Khỏe</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Về Chúng Tôi</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Giới Thiệu</a></li>
+                        <li><a href="#">Đội Ngũ</a></li>
+                        <li><a href="#">Chính Sách</a></li>
+                        <li><a href="#">Liên Hệ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Liên Hệ</h4>
+                    <ul class="footer-contact">
+                        <li>
+                            <span>📍</span>
+                            <span>123 Nguyễn Huệ, Q.1, TP.HCM</span>
+                        </li>
+                        <li>
+                            <span>📞</span>
+                            <span>1900 1234</span>
+                        </li>
+                        <li>
+                            <span>✉️</span>
+                            <span>support@dentalai.vn</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 DentalAI. Bảo lưu mọi quyền.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

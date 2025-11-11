@@ -1,0 +1,189 @@
+% !TeX program = pdfLaTeX
+% Overleaf-friendly Vietnamese report for the Dental AI project
+\documentclass[12pt,a4paper]{article}
+
+% Vietnamese support (pdfLaTeX)
+\usepackage[utf8]{vietnam}
+
+% Common packages
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+% Đường dẫn ảnh
+\graphicspath{{images/}}
+
+% Placeholder macro for figures when real images are not ready
+\newcommand{\placeholder}[2][0.75\linewidth]{%
+  \fbox{\parbox{#1}{\vspace{30mm}\centering \textit{#2}\\[2mm]\vspace{30mm}}}%
+}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Listings setup for code blocks
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny, 
+  stepnumber=1,
+  numbersep=8pt,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  keywordstyle=\color{blue!70!black},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60!black}
+}
+
+\newcommand{\projectTitle}{DentalAI: Hệ Thống Chẩn Đoán Nha Khoa Kết Hợp YOLO + CNN + Gemini}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  {\Large Báo cáo dự án}\par\vspace{6mm}
+  {\LARGE \textbf{\projectTitle}}\par\vspace{8mm}
+  {\large Ngày: \today}\par\vspace{20mm}
+  \begin{flushleft}
+    \textbf{Kho mã nguồn (VS Code)}: \verb|D:/Nam4/Thứ 2|\\
+    Backend: \verb|api/| — Frontend: \verb|frontend/| — Models: \verb|models/|\\
+    Máy chủ Flask: \verb|http://127.0.0.1:5001|
+  \end{flushleft}
+  \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%============================================================
+% ABSTRACT
+%============================================================
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+Oral diseases (dental caries, gingivitis, discoloration) remain pervasive and impose a silent socioeconomic burden, particularly in regions with limited access to preventive care. We present \textbf{Ứng dụng AI Chẩn đoán Sức Khỏe Răng Miệng}, a web-based screening system powered by \emph{Generative AI} (Gemini 2.5 Flash) and supporting vision components (YOLOv8 detection pipeline, CNN classification, and rule-based computer vision fallbacks). The system delivers near–real-time, accessible preliminary assessments and actionable recommendations, reducing dependence on traditional in–clinic diagnostics. The implementation demonstrates a hybrid architecture that balances robustness, interpretability, and extensibility for future multimodal clinical expansion.
+
+%============================================================
+% INTRODUCTION
+%============================================================
+\section{Giới thiệu}
+Cuộc Cách mạng Công nghiệp 4.0 đang định hình lại ngành Y tế thông qua \textbf{Chuyển đổi số} (Digital Transformation), nơi dữ liệu, trí tuệ nhân tạo (AI) và hệ sinh thái điện toán đám mây hội tụ thành nền tảng y tế thông minh. Trong bối cảnh đó, nhu cầu về \textbf{“dân chủ hóa chẩn đoán”} – đưa năng lực đánh giá sơ bộ chất lượng sức khỏe đến tay người dùng tại gia – trở nên cấp thiết. Các bệnh răng miệng như \emph{sâu răng} và \emph{viêm nướu} tuy phổ biến nhưng lại mang tính \textit{“gánh nặng thầm lặng”}: tiến triển chậm, ít triệu chứng rõ rệt giai đoạn đầu, song dẫn đến tổn thất kinh tế, suy giảm chất lượng sống và chi phí điều trị cao về sau.
+
+Tỉ lệ sâu răng ở thanh thiếu niên và người trưởng thành tại nhiều quốc gia vẫn ở mức hai chữ số phần trăm; viêm nướu được xem là điểm khởi đầu của bệnh nha chu, có liên hệ với sức khỏe toàn thân (tim mạch, chuyển hoá). Trong khi đó, các giải pháp chẩn đoán truyền thống dựa trên khám lâm sàng trực tiếp, đòi hỏi trang thiết bị hoặc lịch hẹn. Điều này tạo ra rào cản về \textbf{chi phí}, \textbf{thời gian} và \textbf{địa lý}. 
+
+Chúng tôi giới thiệu một hệ thống tiên phong tận dụng \textbf{AI Tạo Sinh (Generative AI)} – cụ thể Gemini 2.5 Flash – kết hợp chuỗi mô-đun thị giác máy tính để cung cấp \textbf{chẩn đoán tức thời}, hướng dẫn chăm sóc và nâng cao nhận thức phòng ngừa. Trọng tâm nằm ở \textbf{Prompt Engineering chuyên biệt}: buộc mô hình ngôn ngữ đóng vai “nha sĩ ảo”, phân tích ảnh miệng người dùng, thuật ngữ nha khoa và đưa ra khuyến nghị cá nhân hóa, dễ hiểu. \textbf{Đóng góp}: (i) Kiến trúc hybrid YOLO/CNN/Gemini + fallback CV đảm bảo có vùng khoanh; (ii) Cơ chế hiển thị minh hoạ trực quan bounding boxes; (iii) Khung mở rộng cho đa phương thức (X-quang) và tương tác hội thoại.
+
+%============================================================
+% SYSTEM ARCHITECTURE
+%============================================================
+\section{Kiến trúc Hệ thống}
+Hệ thống được thiết kế theo mô hình \textbf{ba lớp} (three–tier) có thể mở rộng:
+\subsection{Lớp Giao diện (Frontend)}
+\begin{itemize}[nosep]
+  \item Công nghệ: HTML5/CSS3/JavaScript thuần; tổ chức thành các khu vực: \textbf{Chẩn đoán}, \textbf{Kiến thức}, \textbf{Quiz tương tác}, \textbf{Hướng dẫn chăm sóc}. (Các tab Quiz/Knowledge có thể thêm nội dung động hoặc được tải từ API.)
+  \item Trải nghiệm: Tải ảnh tức thời, hiển thị ảnh gốc và ảnh chú thích (Canvas overlay – bảo đảm độ nét khung dù YOLO không ổn định). Màu sắc hộp: đỏ (sâu răng), vàng (cao răng), cam (đổi màu), hồng (viêm), xanh lá (khoẻ mạnh).
+  \item Tương tác: Xem tóm tắt mô hình (YOLO, CNN, Gemini), thanh độ tin cậy, danh sách vùng phát hiện, khuyến nghị dạng bullet.
+\end{itemize}
+\subsection{Lớp Logic Ứng dụng (Backend Flask)}
+\begin{itemize}[nosep]
+  \item Gateway duy nhất: \verb|api/app.py| – nhận multipart upload (\verb|POST /analyze|) và điều phối pipeline.
+  \item Quản lý file: lưu vào \verb|uploads/|, tạo tên phiên bản \verb|*_detected.jpg|, \verb|*_cv_detected.jpg|, \verb|*_simple_detected.jpg| để truy xuất.
+  \item Module: \verb|gemini_client.py| (gọi Gemini), \verb|dental_predictor.py| (CNN), \verb|tooth_detector.py| và \verb|simple_tooth_detector.py| (fallback không dùng model), YOLO model tải từ \verb|models/|.
+\end{itemize}
+\subsection{Lõi AI (Hybrid + Prompt Engineering)}
+\begin{enumerate}[nosep]
+  \item \textbf{Gemini 2.5 Flash}: sinh phân tích ngôn ngữ tự nhiên, chuyển tri thức chuyên ngành thành khuyến nghị thân thiện.
+  \item \textbf{YOLOv8}: nhận dạng vùng bệnh lý – bounding boxes và lớp (7 lớp huấn luyện thực nghiệm). Dù mAP chưa tối ưu, hỗ trợ trực quan ban đầu.
+  \item \textbf{CNN}: phân loại tổng thể ảnh (phân nhóm sức khỏe răng miệng). Tạo chỉ dấu định lượng.
+  \item \textbf{Fallback CV / Simple Detector}: đảm bảo luôn có vùng khoanh nếu YOLO bỏ sót hoặc over–detect.
+  \item \textbf{Prompt Engineering}: ràng buộc mô hình vào vai trò “Nha sĩ ảo”, cấu trúc phản hồi gồm: Tình trạng chung, Nguy cơ tiềm ẩn, Khuyến nghị làm sạch, Dinh dưỡng, Tái khám.
+\end{enumerate}
+
+%============================================================
+% DATA & MODELING
+%============================================================
+\section{Dữ liệu và Mô hình}
+\subsection{Bộ dữ liệu YOLO}
+Huấn luyện trên tập ảnh nha khoa tổng hợp (Kaggle) gồm \textbf{~6{,}700 ảnh train / 1{,}680 ảnh validation}. Bảy lớp:
+\begin{enumerate}[nosep]
+  \item Data caries (sâu răng – dạng nền)
+  \item Mouth Ulcer (loét)
+  \item Tooth Discoloration (đổi màu)
+  \item hypodontia (thiểu sản răng)
+  \item Gingivitis (viêm nướu)
+  \item Calculus (cao răng)
+  \item Caries\_Gingivitus\_ToothDiscoloration\_Ulcer (tổ hợp)
+\end{enumerate}
+Kích thước chuẩn hóa: 640×640. \textit{Conf threshold} thử nghiệm từ 0.15 tới 0.50 để cân bằng recall/precision ban đầu. Early mAP@50 ~0.57 (chưa tối ưu – cần thêm epoch, augmentation chuyên ngành).
+\subsection{Các mô-đun bổ trợ}
+CNN (Keras) tải từ \verb|models/dental_model_final.h5| – phục vụ phân loại thô \emph{tình trạng tổng thể}. Các detector không dùng model (thresholding màu, adaptive threshold contour) tăng tính bền vững.
+
+%============================================================
+% RESULTS & DISCUSSION
+%============================================================
+\section{Kết quả và Thảo luận}
+\subsection{Trường hợp minh hoạ}
+Hình \ref{fig:input} và \ref{fig:annot} minh họa ảnh đầu vào và ảnh sau chú thích (Canvas + YOLO/CV). (Thay thế bằng ảnh thực tế khi triển khai Overleaf.)
+\begin{figure}[H]
+  \centering
+  \placeholder{Ảnh mẫu: Đầu vào khoang miệng (thay bằng ảnh của bạn)}
+  \caption{Ảnh đầu vào minh hoạ (placeholder)} \label{fig:input}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \placeholder{Ảnh mẫu: Ảnh đã khoanh vùng/ghi chú (thay bằng ảnh của bạn)}
+  \caption{Ảnh sau khoanh vùng (Bounding Boxes / Canvas Overlay) — placeholder} \label{fig:annot}
+\end{figure}
+\subsection{Giá trị ứng dụng}
+Khác với mô hình cũ chỉ trả về \textit{phần trăm} xác suất lớp, hệ thống mới cung cấp \textbf{phân tích diễn giải}: mô tả tình trạng, suy luận nguy cơ, đề xuất lịch chăm sóc. Người dùng cuối nhận được \textbf{khuyến nghị hành động} (đánh răng, dùng nước súc miệng kháng khuẩn, tránh thực phẩm tạo mảng bám) hơn là con số trừu tượng.
+
+    	extbf{Tính tương tác}: Canvas cho phép xem trực tiếp vùng khả nghi; Gemini diễn giải theo ngôn ngữ tự nhiên giúp giảm rào cản hiểu biết. Điều này thúc đẩy phát hiện sớm – đặc biệt trong bối cảnh thiếu tiếp cận nha sĩ định kỳ.
+
+\subsection{Phân tích kỹ thuật}
+\begin{itemize}
+  \item \emph{Robustness}: Fallback CV tránh tình trạng YOLO bao toàn ảnh. Simple detector cải thiện độ chuẩn vùng răng bằng contour và adaptive threshold.
+  \item \emph{Explainability}: Mỗi thành phần có vai trò rõ: YOLO (vị trí), CNN (nhãn tổng quát), Gemini (ngữ nghĩa). Người dùng hiểu mạch suy luận hơn.
+  \item \emph{Latency}: Pipeline xử lý một ảnh mức sub–second tới vài giây (phụ thuộc độ lớn mô hình ngôn ngữ).
+\end{itemize}
+
+%============================================================
+% CONCLUSION & FUTURE WORK
+%============================================================
+\section{Kết luận và Hướng phát triển}
+  	extbf{Tổng kết}: Dự án trình bày một khung hybrid kết hợp thị giác máy tính và Generative AI để dân chủ hóa chẩn đoán nha khoa sơ bộ, hướng đến nâng cao nhận thức phòng ngừa.
+
+  	extbf{Hướng phát triển kỹ thuật}: 
+\begin{enumerate}[nosep]
+  \item \textbf{Trực quan hóa nâng cao}: Tối ưu YOLOv8 hoặc chuyển sang \emph{instance segmentation} (Mask R-CNN, Segment Anything) nhằm khoanh chính xác biên răng, đánh dấu tổn thương vi thể.
+  \item \textbf{Đa phương thức}: Mở rộng xử lý ảnh X-quang, Panorama, CBCT – kiến trúc fusion (late/early) để tạo báo cáo tổng quát (men, ngà, xương ổ răng).
+  \item \textbf{Cá nhân hóa}: Tích hợp chatbot tư vấn (Gemini API) cập nhật hành vi người dùng (tần suất chải răng, chế độ ăn) -> kế hoạch chăm sóc 1:1.
+  \item \textbf{Liên tục học (Continual Learning)}: Thu thập ảnh phản hồi người dùng để fine-tune mô hình nhẹ, cải thiện độ chính xác theo vùng địa lý.
+  \item \textbf{Đánh giá lâm sàng}: Thiết lập protocol thử nghiệm với nha sĩ để hiệu chỉnh ngưỡng và độ tin cậy.
+\end{enumerate}
+
+%============================================================
+% REFERENCES
+%============================================================
+\section*{Tài liệu tham khảo}
+\addcontentsline{toc}{section}{Tài liệu tham khảo}
+\begin{thebibliography}{9}
+\bibitem{yolo} Ultralytics. ``YOLOv8 Documentation.'' \url{https://docs.ultralytics.com/}
+\bibitem{opencv} Bradski, G. ``The OpenCV Library.'' \emph{Dr. Dobb's Journal}, 2000.
+\bibitem{gemini} Google. ``Gemini API Overview.'' (Truy cập: 2025).
+\bibitem{oralhealth} Petersen, P.E. ``The World Oral Health Report 2003.'' \emph{WHO Global Oral Health Programme}.
+\bibitem{seganything} Kirillov, A. et al. ``Segment Anything.'' \emph{arXiv:2304.02643}, 2023.
+\bibitem{maskrcnn} He, K. et al. ``Mask R-CNN.'' \emph{IEEE TPAMI}, 2020.
+\end{thebibliography}
+
+\end{document}

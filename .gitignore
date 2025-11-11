@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Uploads folder
+uploads/
+temp/
+
+# IDE / Editor specific
+.vscode/
+
+# LaTeX files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.dvi
+
+# Large model files
+*.pt
+*.h5
+*.pkl
+*.joblib
+
+# OS files
+.DS_Store
+Thumbs.db

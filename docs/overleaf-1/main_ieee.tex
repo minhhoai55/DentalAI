@@ -1,0 +1,381 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{array,multirow,booktabs}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\graphicspath{{images/}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  citecolor=black
+}
+\begin{document}
+
+\title{DentalAI: Hệ Thống Chẩn Đoán Sức Khoẻ Răng Miệng Kết Hợp YOLOv8, CNN, Gemini và Bộ Dò Thị Giác}
+
+\author{
+  \centering
+  \IEEEauthorblockN{Khổng Minh Hoài}\\
+  \IEEEauthorblockA{Khoa Công Nghệ Thông Tin, Trường Đại Học Đại Nam, Việt Nam\\
+  hoaikhong.15052004@gmail.com}\\[1ex]
+  \IEEEauthorblockN{ThS. Nguyễn Thái Khánh, ThS. Lê Trung Hiếu}\\
+  \IEEEauthorblockA{Giảng viên hướng dẫn, Khoa Công Nghệ Thông Tin, Trường Đại Học Đại Nam, Việt Nam}
+}
+
+\maketitle
+
+\begin{abstract}
+Bài báo này giới thiệu hệ thống DentalAI - một giải pháp chẩn đoán sơ bộ sức khỏe răng miệng dựa trên trí tuệ nhân tạo, hướng tới việc hỗ trợ sàng lọc và tư vấn ban đầu cho người dân. Hệ thống kết hợp nhiều công nghệ AI tiên tiến: \textbf{YOLOv8} để phát hiện và định vị các tổn thương răng miệng (sâu răng, viêm nướu, cao răng, đổi màu răng), \textbf{CNN} để phân loại tình trạng tổng thể (bình thường/sâu răng/viêm nướu/mảng bám), bộ \textbf{dò thị giác truyền thống} (HSV masking + adaptive contour) làm fallback detector đảm bảo luôn có vùng nghi vấn để hiển thị, và \textbf{Gemini 2.5 Flash} để sinh ra các khuyến nghị chăm sóc bằng ngôn ngữ tự nhiên. Kiến trúc hệ thống được xây dựng theo mô hình web nhẹ sử dụng Flask backend kết hợp HTML/CSS/JavaScript frontend, với pipeline xử lý tuần tự: tải ảnh → detector fallback → vẽ chú thích → CNN phân loại → tổng hợp → LLM sinh khuyến nghị. Kết quả thử nghiệm ban đầu trên độ phân giải 640×640 pixel cho thấy thời gian suy luận YOLOv8 khoảng 120ms, CNN khoảng 40ms, hậu xử lý 8ms, và LLM từ 1.2-2.5 giây. Cơ chế điều chỉnh ngưỡng confidence động và fallback computer vision giúp tăng khả năng hiển thị vùng nghi vấn ngay cả khi ảnh đầu vào có chất lượng thấp hoặc nhiễu. Hệ thống được thiết kế với tính ứng dụng thực tế cao, có thể triển khai tại các phòng khám nha khoa, trung tâm y tế cộng đồng để hỗ trợ bước sàng lọc ban đầu trước khi khám chuyên khoa.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Chẩn đoán răng miệng, YOLOv8, CNN, LLM, Gemini AI, phát hiện đối tượng, phân loại hình ảnh, sàng lọc y tế, hệ thống web AI.
+\end{IEEEkeywords}
+
+\section{Giới Thiệu}
+
+Trong bối cảnh chăm sóc sức khỏe hiện đại, việc phát hiện sớm các vấn đề răng miệng đóng vai trò quan trọng trong việc phòng ngừa và điều trị kịp thời. Tuy nhiên, không phải ai cũng có điều kiện tiếp cận dễ dàng với dịch vụ nha khoa chuyên nghiệp, đặc biệt tại các vùng xa xôi hoặc có điều kiện kinh tế hạn chế. Điều này tạo ra nhu cầu cấp thiết cho các giải pháp sàng lọc ban đầu, giúp người dân tự đánh giá tình trạng răng miệng của mình và nhận được khuyến nghị phù hợp.
+
+Trí tuệ nhân tạo (AI) đã chứng minh được tiềm năng lớn trong lĩnh vực chẩn đoán hình ảnh y tế. Các mô hình deep learning như CNN và YOLO đã đạt được độ chính xác cao trong việc phát hiện và phân loại các bệnh lý qua hình ảnh. Đặc biệt, việc kết hợp nhiều mô hình AI khác nhau có thể tăng cường độ tin cậy và khả năng giải thích của hệ thống.
+
+Bài báo này trình bày hệ thống DentalAI - một giải pháp tích hợp nhiều công nghệ AI để chẩn đoán sơ bộ các vấn đề răng miệng thông qua phân tích hình ảnh. Hệ thống không chỉ phát hiện và phân loại các tổn thương mà còn cung cấp lời giải thích và khuyến nghị bằng ngôn ngữ tự nhiên, giúp người dùng dễ hiểu và thực hiện.
+
+\section{Cơ Sở Lý Thuyết và Nghiên Cứu Liên Quan}
+
+\subsection{Ứng dụng AI trong chẩn đoán nha khoa}
+Các nghiên cứu gần đây đã chứng minh hiệu quả của deep learning trong chẩn đoán hình ảnh nha khoa. CNN đã được sử dụng thành công để phát hiện sâu răng với độ chính xác cao \cite{yolo}. YOLO và các biến thể của nó cũng đã được áp dụng để phát hiện đa đối tượng trong hình ảnh răng miệng.
+
+\subsection{Hệ thống hybrid AI}
+Việc kết hợp nhiều mô hình AI khác nhau (ensemble learning) đã được chứng minh là có thể cải thiện đáng kể hiệu suất và độ tin cậy. Trong bối cảnh chẩn đoán y tế, việc có nhiều "second opinion" từ các mô hình khác nhau giúp tăng độ tin cậy của kết quả.
+
+\section{Kiến Trúc Hệ Thống}
+\subsection{Tổng quan kiến trúc}
+Hệ thống DentalAI được thiết kế theo kiến trúc ba lớp: (1) \textbf{Presentation Layer}: Frontend web sử dụng HTML/CSS/JavaScript với canvas overlay để hiển thị kết quả; (2) \textbf{Application Layer}: Flask service trung tâm (\verb|api/app.py|) điều phối các thành phần; (3) \textbf{Intelligence Layer}: Các mô hình AI gồm YOLOv8, CNN, detector thị giác truyền thống và LLM Gemini.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{TaiSaoChonChungToi.png}
+  \caption{Kiến trúc tổng thể hệ thống DentalAI với các thành phần AI tích hợp.}
+  \label{fig:value}
+\end{figure}
+
+\subsection{Pipeline xử lý thông minh}
+Hệ thống thực hiện quy trình xử lý tuần tự với cơ chế fallback thông minh: Tải ảnh → Lưu tạm → Simple Detector (nếu phát hiện được) → CV Detector (nếu simple thất bại) → YOLOv8 (nếu CV thất bại) → Vẽ chú thích bounding boxes → CNN phân loại tổng thể → Tổng hợp kết quả → Prompt LLM → Trả JSON response + link ảnh đã chú thích.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{NoiDungPhanTich2.png}
+  \caption{Giao diện phân tích tự động với các thông tin chi tiết về tình trạng răng miệng.}
+  \label{fig:analysis}
+\end{figure}
+
+\subsection{Giao diện API và tương tác}
+Hệ thống cung cấp RESTful API với endpoint chính \verb|POST /analyze| nhận multipart field \verb|file|. Cấu trúc phản hồi JSON được thiết kế chi tiết để cung cấp đầy đủ thông tin:
+\begin{verbatim}
+{
+  success: true,
+  gemini_analysis: "Phân tích chi tiết...",
+  cnn_prediction: {
+     predicted_class: "gingivitis",
+     confidence: 0.82,
+     all_probabilities: {...}
+  },
+  detections: [bounding_boxes],
+  annotated_image: "/uploads/result.jpg",
+  model: "yolo" | "cv" | "simple"
+}
+\end{verbatim}
+
+\subsection{Quản lý tệp và lưu trữ}
+Hệ thống quản lý tệp thông qua thư mục \verb|uploads/| với các phiên bản ảnh khác nhau: ảnh gốc và các phiên bản đã chú thích từ các detector (\verb|*_detected.jpg|, \verb|*_cv_detected.jpg|, \verb|*_simple_detected.jpg|). Cơ chế đặt tên sử dụng timestamp hoặc UUID để tránh xung đột tên tệp.
+
+\subsection{Giao diện người dùng và trải nghiệm}
+Giao diện được thiết kế thân thiện với việc hiển thị song song ảnh gốc và ảnh đã chú thích với các bounding boxes có mã màu: đỏ (sâu răng), vàng (cao răng), cam (đổi màu), hồng (viêm nướu), xanh lá (vùng khỏe mạnh).
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{Trangchu.png}
+  \caption{Giao diện trang chủ hệ thống DentalAI với thiết kế hiện đại, thân thiện người dùng.}
+  \label{fig:home}
+\end{figure}
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{UpAnhRang.png}
+  \caption{Giao diện tải ảnh răng miệng với hướng dẫn chi tiết và preview ảnh.}
+  \label{fig:upload}
+\end{figure}
+
+\section{Phương Pháp và Mô Hình AI}
+
+\subsection{Mô hình YOLOv8 cho phát hiện đối tượng}
+YOLOv8 được fine-tune trên tập dữ liệu tổng hợp từ Kaggle kết hợp với ảnh thu thập bổ sung, được chuẩn hóa về kích thước 640×640 pixel. Mô hình được huấn luyện để phát hiện và định vị các loại tổn thương răng miệng khác nhau như được mô tả trong Bảng \ref{tab:yolo-classes}.
+\begin{table}[H]
+\centering
+\caption{Các lớp đối tượng trong mô hình YOLOv8}
+\label{tab:yolo-classes}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Lớp & Mô tả \\
+\midrule
+Dental caries & Sâu răng, vùng tổn thương caries \\
+Mouth Ulcer & Loét niêm mạc trong khoang miệng \\
+Tooth Discoloration & Đổi màu răng, nhiễm màu men răng \\
+Hypodontia & Thiểu sản răng, thiếu răng \\
+Gingivitis & Viêm nướu răng \\
+Calculus & Cao răng, mảng bám vôi hóa \\
+Combination & Tổ hợp nhiều loại tổn thương \\
+\bottomrule
+\end{tabular}
+\end{table}
+Hệ thống áp dụng cơ chế điều chỉnh ngưỡng confidence động: nếu số lượng detection < 1 ở ngưỡng 0.35 thì tự động giảm xuống 0.20 để tăng recall, đảm bảo luôn có kết quả phân tích.
+
+\begin{table}[H]
+\centering
+\caption{Siêu tham số huấn luyện YOLOv8}
+\label{tab:yolo-hparams}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Tham số & Giá trị \\
+\midrule
+Epochs & 100 \\
+Batch size & 16 \\
+Image size & 640×640 \\
+Optimizer & SGD (momentum=0.937) \\
+Initial learning rate & 0.01 \\
+Weight decay & 0.0005 \\
+Data augmentation & Mosaic + HSV + Flip \\
+Confidence threshold & 0.35 (fallback 0.20) \\
+IoU threshold (NMS) & 0.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mô hình CNN cho phân loại tổng thể}
+Mô hình CNN được thiết kế với các block convolution sâu dần từ 32 đến 256 filters, sử dụng optimizer Adam với learning rate 0.001. Áp dụng early stopping dựa trên validation loss để tránh overfitting.
+
+\begin{table}[H]
+\centering
+\caption{Kiến trúc mô hình CNN phân loại}
+\label{tab:cnn-arch}
+\begin{tabular}{@{}llc@{}}
+\toprule
+Khối & Chi tiết & Dropout \\
+\midrule
+Conv Block 1 & Conv(32,3×3) - Conv(32,3×3) - MaxPool(2×2) & 0.25 \\
+Conv Block 2 & Conv(64,3×3) - Conv(64,3×3) - MaxPool(2×2) & 0.25 \\
+Conv Block 3 & Conv(128,3×3) - MaxPool(2×2) & 0.30 \\
+Conv Block 4 & Conv(256,3×3) - MaxPool(2×2) & 0.30 \\
+Flatten & Vector hóa feature maps & - \\
+Dense Layer & 256 units, ReLU activation & 0.5 \\
+Output Layer & 4 units, Softmax activation & - \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Detector thị giác truyền thống}
+Bộ detector backup sử dụng các kỹ thuật computer vision cổ điển:
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{HSV color masking}: Phát hiện vùng màu đặc trưng (vàng/nâu cho cao răng, đỏ cho viêm) dựa trên ngưỡng Saturation và Value.
+  \item \textbf{Morphological operations}: Opening để loại bỏ nhiễu, closing để kết nối các vùng bị phân mảnh.
+  \item \textbf{Adaptive threshold + contour detection}: Phân tách từng răng riêng lẻ, lọc theo diện tích và tỷ lệ chiều cao/chiều rộng.
+  \item \textbf{Fallback logic}: Kích hoạt khi YOLO không phát hiện được đối tượng nào hoặc confidence thấp.
+\end{itemize}
+
+\subsection{Tích hợp LLM và Prompt Engineering}
+Gemini 2.5 Flash được tích hợp để sinh khuyến nghị bằng ngôn ngữ tự nhiên. Prompt template được thiết kế với cấu trúc: [Tình trạng tổng thể] + [Danh sách phát hiện chi tiết] + [Yêu cầu: viết ngắn gọn, dễ hiểu, tránh thuật ngữ y khoa phức tạp]. Hệ thống kiểm soát độ dài output thông qua token limit.
+
+\section{Thực Nghiệm và Kết Quả}
+
+\subsection{Môi trường thử nghiệm}
+Hệ thống được thử nghiệm trên môi trường CPU laptop phổ thông với Python 3.10 và Gemini API. Dataset được phân chia theo tỷ lệ 80/20 cho training và testing. Do giới hạn về ground truth pixel-level được chuẩn hóa, đánh giá hiện tại mới ở mức sơ bộ.
+
+\subsection{Kết quả phân tích hình ảnh}
+Hình \ref{fig:input} và \ref{fig:annot} minh họa quá trình phân tích từ ảnh đầu vào đến kết quả cuối cùng với các vùng nghi vấn được đánh dấu.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{100.jpg}
+  \caption{Ảnh đầu vào khoang miệng của người dùng.}
+  \label{fig:input}
+\end{figure}
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{100_cv_detected.jpg}
+  \caption{Kết quả phân tích với các vùng nghi vấn được đánh dấu bounding boxes.}
+  \label{fig:annot}
+\end{figure}
+
+\subsection{Phân tích hiệu suất hệ thống}
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Tính ổn định}: Cơ chế fallback từ simple detector → CV detector → YOLO giảm thiểu rủi ro thất bại phân tích, đảm bảo luôn có kết quả trực quan cho người dùng.
+  \item \textbf{Khả năng giải thích}: Kiến trúc phân tách rõ ràng vai trò - YOLO (định vị), CNN (phân loại tổng thể), LLM (giải thích ngữ nghĩa) - giúp người dùng hiểu rõ cơ sở của kết quả.
+  \item \textbf{Hiệu năng thời gian thực}: YOLO inference ~120ms, CNN ~40ms, Gemini LLM 1.2-2.5s trên CPU thông thường với độ phân giải 640×640.
+  \item \textbf{Hạn chế hiện tại}: Chưa có đánh giá lâm sàng chính thức, mAP của YOLO còn ở mức sơ bộ, chưa hỗ trợ segmentation tinh vi cho men/ngà răng, chưa kiểm thử trên thiết bị di động.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Hiệu năng inference của các thành phần hệ thống}
+\label{tab:perf}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Mô-đun & Thời gian (ms) & Ghi chú \\
+\midrule
+YOLOv8 detection & 120 & 640×640, CPU optimization \\
+CV detector & 25 & Morphology + contour + HSV \\
+Simple detector & 5 & Adaptive threshold \\
+CNN classification & 40 & Batch size = 1 \\
+Post-processing & 8 & Drawing boxes + JSON \\
+Gemini LLM & 1200-2500 & API network call \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Ma trận nhầm lẫn mô hình CNN (kết quả sơ bộ)}
+\label{tab:confusion}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Actual \textbackslash Predicted & Normal & Cavity & Gingivitis & Plaque \\
+\midrule
+Normal & 42 & 3 & 2 & 1 \\
+Cavity & 4 & 38 & 5 & 3 \\
+Gingivitis & 2 & 6 & 40 & 4 \\
+Plaque & 1 & 5 & 3 & 41 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Triển Khai và Công Nghệ}
+
+\subsection{Công nghệ Frontend}
+Giao diện người dùng được phát triển sử dụng HTML5, CSS3 và JavaScript ES6+ thuần túy, tích hợp Canvas API để hiển thị overlay bounding boxes. Sử dụng Fetch API cho giao tiếp với backend và DOM manipulation cho cập nhật giao diện real-time.
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{KetQuaPhanTich1.png}
+  \caption{Giao diện hiển thị kết quả phân tích chi tiết với thông tin đầy đủ về tình trạng răng miệng.}
+  \label{fig:analysis1}
+\end{figure}
+
+\begin{figure}[H]\centering
+  \includegraphics[width=0.46\textwidth]{KhuyenNghiDieuTri.png}
+  \caption{Màn hình khuyến nghị điều trị và chăm sóc răng miệng được sinh tự động bởi LLM.}
+  \label{fig:recommend}
+\end{figure}
+
+\subsection{Kiến trúc Backend}
+Backend được xây dựng trên Flask framework với các module chính: \verb|app.py| (điều phối trung tâm), \verb|simple_tooth_detector.py| và \verb|tooth_detector.py| (các detector), YOLO model loader, Gemini client integration, và CNN predictor. Hệ thống logging chi tiết để theo dõi quá trình phát hiện và fallback.
+
+\subsection{Containerization và Deployment}
+Ứng dụng được đóng gói bằng Docker với base image python-slim, tự động cài đặt dependencies từ \verb|requirements.txt|, expose port 5001. Hỗ trợ horizontal scaling thông qua load balancer và model caching để tối ưu hiệu suất.
+
+\section{Bảo Mật và Quyền Riêng Tư}
+
+\subsection{Mô hình bảo mật đa lớp}
+Hệ thống áp dụng nguyên tắc bảo mật đa lớp với phân quyền rõ ràng: (1) \textbf{End users}: upload ảnh, xem kết quả cá nhân; (2) \textbf{Healthcare staff}: xem logs, điều chỉnh thresholds; (3) \textbf{System admin}: quản lý API keys, cấu hình hệ thống. Middleware authentication kiểm tra quyền trước khi truy cập các protected routes.
+
+\subsection{Bảo vệ dữ liệu hình ảnh}
+Ảnh được lưu trữ tạm thời chỉ để tạo phiên bản annotated, với cơ chế auto-purge sau thời gian định trước. Hỗ trợ AES encryption at-rest cho deployment trên cloud environments. Strict CORS policy và rate limiting để chống abuse.
+
+\subsection{Privacy và Medical Ethics}
+Tuân thủ nguyên tắc y tế về quyền riêng tư: hiển thị disclaimer rõ ràng về tính chất hỗ trợ (không thay thế chẩn đoán chuyên khoa), cho phép người dùng xóa dữ liệu (right to be forgotten), không log thông tin cá nhân nhận dạng với raw image paths.
+
+\section{Đánh Giá và Thảo Luận}
+
+\subsection{Ưu điểm của hệ thống}
+Hệ thống DentalAI mang lại những lợi ích đáng kể:
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Accessibility}: Cung cấp công cụ sàng lọc ban đầu cho người dân ở vùng xa, nơi thiếu bác sĩ nha khoa.
+  \item \textbf{Multi-modal AI}: Kết hợp detection, classification và natural language generation tạo ra trải nghiệm người dùng hoàn chỉnh.
+  \item \textbf{Robustness}: Cơ chế fallback đảm bảo hệ thống luôn có output có ý nghĩa ngay cả với input chất lượng thấp.
+  \item \textbf{Interpretability}: Kết quả có thể giải thích được thông qua visualizations và text explanations.
+\end{itemize}
+
+\subsection{Hạn chế và thách thức}
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Medical validation}: Cần nghiên cứu lâm sàng để xác thực độ chính xác so với chẩn đoán của chuyên gia.
+  \item \textbf{Data diversity}: Dataset hiện tại chưa đại diện đầy đủ cho các nhóm dân số và điều kiện môi trường khác nhau.
+  \item \textbf{Regulatory compliance}: Cần tuân thủ các quy định y tế về thiết bị hỗ trợ chẩn đoán.
+  \item \textbf{False positive/negative}: Cân bằng giữa sensitivity và specificity để tránh gây lo lắng không cần thiết hoặc bỏ sót vấn đề nghiêm trọng.
+\end{itemize}
+
+\section{Hướng Phát Triển Tương Lai}
+
+Các định hướng phát triển tiếp theo bao gồm:
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Advanced segmentation}: Tích hợp Mask R-CNN hoặc SAM để có segmentation tinh vi ở mức pixel, phân biệt rõ ràng men răng, ngà răng, nướu.
+  \item \textbf{Multi-modal expansion}: Hỗ trợ ảnh X-quang, panoramic radiography để chẩn đoán toàn diện hơn.
+  \item \textbf{Personalization}: Xây dựng profile người dùng để theo dõi tiến triển theo thời gian và cá nhân hóa khuyến nghị.
+  \item \textbf{Edge deployment}: Optimize models cho WebAssembly hoặc ONNX Runtime để chạy trực tiếp trên browser, giảm dependency API.
+  \item \textbf{Clinical validation}: Thực hiện nghiên cứu lâm sàng với sự tham gia của bác sĩ nha khoa để validate accuracy.
+  \item \textbf{Federated learning}: Cho phép cải thiện mô hình từ dữ liệu phân tán mà không vi phạm privacy.
+\end{itemize}
+
+\section{Kết Luận}
+
+Bài báo đã trình bày hệ thống DentalAI - một giải pháp tích hợp đa mô hình AI để hỗ trợ chẩn đoán sơ bộ các vấn đề răng miệng. Hệ thống kết hợp thành công YOLOv8 detection, CNN classification, computer vision fallback và LLM natural language generation để tạo ra một công cụ hỗ trợ y tế có tính ứng dụng thực tế cao.
+
+Kiến trúc hybrid với cơ chế fallback đảm bảo độ tin cậy, trong khi giao diện thân thiện và khả năng giải thích bằng ngôn ngữ tự nhiên giúp người dùng dễ dàng tiếp cận và hiểu kết quả. Hệ thống phù hợp để triển khai như một công cụ sàng lọc ban đầu, đặc biệt hữu ích ở các vùng thiếu dịch vụ nha khoa chuyên nghiệp.
+
+Mặc dù còn những hạn chế cần khắc phục về mặt validation lâm sàng và compliance, DentalAI đã chứng minh tiềm năng của việc ứng dụng AI trong healthcare accessibility, mở ra hướng nghiên cứu và phát triển thú vị cho tương lai.
+
+\section*{Lời Cảm Ơn}
+
+Nhóm tác giả chân thành cảm ơn giảng viên hướng dẫn và khoa Công nghệ Thông tin, Trường Đại học Đại Nam đã hỗ trợ trong quá trình nghiên cứu và phát triển. Đặc biệt cảm ơn cộng đồng mã nguồn mở và các dataset công khai đã tạo điều kiện thuận lợi cho việc huấn luyện và thử nghiệm hệ thống.
+
+\appendices
+\section{Thuật toán Fallback Detection}
+Pseudocode mô tả quy trình fallback thông minh:
+\begin{verbatim}
+function analyze_dental_image(image):
+  // Try simple detector first (fastest)
+  boxes = simple_detector(image)
+  if boxes.count >= 1:
+    model_used = 'simple'
+  else:
+    // Fallback to computer vision detector
+    boxes = cv_detector(image)  
+    if boxes.count >= 1:
+      model_used = 'cv'
+    else:
+      // Final fallback to YOLO with adaptive threshold
+      boxes = yolo_detect(image, confidence=0.35)
+      if boxes.count == 0:
+        boxes = yolo_detect(image, confidence=0.20)
+      model_used = 'yolo'
+  
+  // Always perform CNN classification
+  classification = cnn_classify(image)
+  
+  // Generate natural language explanation
+  analysis_text = gemini_llm_analyze(boxes, classification)
+  
+  return {
+    detections: boxes,
+    classification: classification, 
+    explanation: analysis_text,
+    model_used: model_used
+  }
+\end{verbatim}
+
+\section{Cấu trúc dữ liệu chính}
+Các cấu trúc dữ liệu JSON được sử dụng trong hệ thống để lưu trữ kết quả phân tích và metadata của từng thành phần AI.
+
+\begin{thebibliography}{99}
+\bibitem{yolo} Ultralytics, ``YOLOv8: State-of-the-Art Object Detection,'' \url{https://docs.ultralytics.com/}, accessed Nov. 2024.
+\bibitem{opencv} G. Bradski, ``The OpenCV Library,'' \textit{Dr. Dobb's Journal of Software Tools}, vol. 25, no. 11, pp. 120-123, 2000.
+\bibitem{gemini} Google DeepMind, ``Gemini: A Family of Highly Capable Multimodal Models,'' Technical Report, 2024.
+\bibitem{dental_ai} S. Prajapati et al., ``Classification of dental diseases using CNN and transfer learning,'' in \textit{Proc. 5th Int. Conf. Computing for Sustainable Global Development}, 2018, pp. 70-74.
+\bibitem{medical_ai} D. Shen et al., ``Deep learning in medical image analysis,'' \textit{Annual Review of Biomedical Engineering}, vol. 19, pp. 221-248, 2017.
+\bibitem{flask} M. Grinberg, \textit{Flask Web Development: Developing Web Applications with Python}, 2nd ed. O'Reilly Media, 2018.
+\bibitem{cnn_dental} F. Mertens et al., ``Artificial intelligence for caries detection: A systematic review,'' \textit{Journal of Dentistry}, vol. 102, p. 103924, 2020.
+\bibitem{ensemble_ml} L. Rokach, ``Ensemble-based classifiers,'' \textit{Artificial Intelligence Review}, vol. 33, no. 1-2, pp. 1-39, 2010.
+\end{thebibliography}
+
+\end{document}

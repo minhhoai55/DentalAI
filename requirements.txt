@@ -1,0 +1,14 @@
+Flask
+Flask-Cors
+google-generativeai
+python-dotenv
+Pillow
+werkzeug
+tensorflow
+scikit-learn
+opencv-python
+numpy
+matplotlib
+pandas
+seaborn
+kagglehub

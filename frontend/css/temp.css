@@ -1,0 +1,33 @@
+/* Result Header Styles */
+.result-header {
+    margin-bottom: 24px;
+}
+
+.result-status {
+    background: var(--bg-light);
+    padding: 16px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#overview-status-icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--success);
+    color: white;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+#overview-text {
+    font-size: 15px;
+    color: var(--text-dark);
+    font-weight: 500;
+}
