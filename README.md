@@ -250,9 +250,7 @@ DentalAI/
 
 **Họ tên**: Khổng Minh Hoài
 
-**Lớp**: CNTT K16
-
-**Mã sinh viên**: 2051220148
+**Lớp**: CNTT 16-04
 
 **Email**: hoaikhong.15052004@gmail.com
 
